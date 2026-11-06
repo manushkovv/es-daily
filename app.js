@@ -255,11 +255,14 @@
     const head = (label, body) => `${top()}<p class="muted">${label}</p>${body}`;
     const qBlock = e.q ? `<div class="card"><div class="es">${esc(e.q)}</div>${e.tr ? `<div class="muted">${esc(e.tr)}</div>` : ""}</div>` : "";
 
-    if (e.type === "choice" || e.type === "listen") {
-      const label = e.type === "listen" ? "Послушай и выбери перевод" : "Выбери ответ";
+    if (e.type === "choice" || e.type === "listen" || e.type === "meme") {
+      const label = e.type === "listen" ? "Послушай и выбери перевод" : e.type === "meme" ? "Мем 😏" : "Выбери ответ";
       const body = e.type === "listen"
         ? `<div class="card flash"><button class="say" style="width:64px;height:64px;font-size:28px" data-say="${esc(e.say)}">🔊</button>
            <p class="muted" id="fallback" style="display:none">${esc(e.say)}</p></div>`
+        : e.type === "meme"
+        ? `<div class="meme"><div class="m-top">${esc(e.top)}</div><div class="m-emoji">${esc(e.emoji)}</div>
+           <div class="m-bottom">${esc(e.bottom)}</div></div><p>${esc(e.q)}</p>`
         : qBlock;
       render(head(label, body + e.options.map((o, i) => `<button class="opt" data-i="${i}">${esc(o)}</button>`).join("") + `<div id="fb"></div>`));
       if (e.type === "listen" && !speak(e.say)) document.getElementById("fallback").style.display = "block";
@@ -267,7 +270,9 @@
         const i = +b.dataset.i, good = i === e.answer;
         $app.querySelectorAll(".opt").forEach(x => { x.disabled = true; if (+x.dataset.i === e.answer) x.classList.add("ok"); });
         if (!good) b.classList.add("bad");
-        const full = e.type === "listen" ? `«${e.say}» — ${e.options[e.answer]}` : (e.q.includes("___") ? e.q.replace("___", e.options[e.answer]) : e.options[e.answer]);
+        const full = e.type === "listen" ? `«${e.say}» — ${e.options[e.answer]}`
+          : e.type === "meme" ? ([e.bottom, e.top].find(t => t.includes("___")) || "___").replace("___", e.options[e.answer])
+          : (e.q.includes("___") ? e.q.replace("___", e.options[e.answer]) : e.options[e.answer]);
         result(s, good, full);
       });
       return;
@@ -335,6 +340,7 @@
     document.getElementById("fb").innerHTML = `<div class="feedback ${good ? "ok" : "bad"}">
       <b>${good ? "Верно!" : "Не совсем."}</b> ${note || (good ? "" : `Правильно: <b>${esc(full)}</b>`)}
       ${good && !note ? `<span class="muted">${esc(full)}</span>` : ""}
+      ${s.e.explain ? `<p style="margin:8px 0 0">💡 ${esc(s.e.explain)}</p>` : ""}
       ${!good ? `<p class="muted" style="margin:6px 0 0">Это задание вернётся в конце урока.</p>` : ""}</div>
       <div class="row"><button class="btn" id="go" style="flex:1">Дальше</button>${canSay ? sayBtn(say).replace('class="say"', 'class="say" style="background:var(--bg2)"') : ""}</div>`;
     $app.querySelectorAll("#fb [data-say]").forEach(b => b.onclick = () => speak(b.dataset.say));

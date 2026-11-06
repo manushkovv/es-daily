@@ -61,3 +61,7 @@ input.answer:focus { border-color: var(--btn); }
 .top .x { border: 0; background: none; font-size: 22px; color: var(--hint); cursor: pointer; padding: 4px 8px; }
 .top .progress { flex: 1; margin: 0; }
 .tag { display: inline-block; font-size: 12px; padding: 2px 8px; border-radius: 8px; background: var(--bg2); color: var(--hint); }
+.meme { background: #111; color: #fff; border-radius: var(--radius); padding: 16px 14px; margin: 10px 0; text-align: center;
+  font-family: Impact, "Arial Black", "Helvetica Neue", sans-serif; letter-spacing: .2px; }
+.meme .m-top, .meme .m-bottom { font-size: 19px; line-height: 1.25; text-shadow: 0 2px 0 #000; }
+.meme .m-emoji { font-size: 46px; margin: 14px 0; font-family: initial; }
