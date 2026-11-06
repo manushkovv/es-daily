@@ -1,0 +1,17 @@
+name: Daily reminder
+
+on:
+  schedule:
+    - cron: "0 14 * * *"   # 19:00 по Ханты-Мансийску (UTC+5)
+  workflow_dispatch:
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 .github/scripts/remind.py
+        env:
+          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          CHAT_ID: ${{ secrets.CHAT_ID }}
+          APP_URL: https://manushkovv.github.io/es-daily/
