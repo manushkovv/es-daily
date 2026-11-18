@@ -126,6 +126,7 @@
       html += `<div class="card"><b>Все доступные уроки пройдены 🎉</b><p class="muted">Новые недели появятся скоро. Пока повторяй слова.</p></div>`;
     }
     if (due && (doneToday || !next)) html += `<button class="btn secondary" data-review="1">Повторить слова (${due})</button>`;
+    if (API) html += `<button class="btn secondary" data-chat="1">💬 Поболтать с Лусией</button>`;
 
     for (const w of C.weeks) {
       const ls = PLAN.filter(l => l.week === w.n);
@@ -144,7 +145,67 @@
     $app.querySelectorAll("[data-open]").forEach(el => el.onclick = () => startLesson(lessonById(el.dataset.open)));
     const r = $app.querySelector("[data-review]");
     if (r) r.onclick = () => startReviewOnly();
+    const c = $app.querySelector("[data-chat]");
+    if (c) c.onclick = () => chat();
   }
+
+  /* ───────── чат с Лусией (общая история с ботом) ───────── */
+  const API = (window.APP_CONFIG || {}).apiUrl || "";
+  const api = body => fetch(API + "/api/chat", {
+    method: "POST", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(Object.assign({ initData: tg ? tg.initData : "" }, body))
+  }).then(r => r.json());
+
+  async function chat() {
+    if (tg) { tg.BackButton.show(); tg.BackButton.onClick(leaveChat); }
+    render(`<div class="top"><button class="x" id="x">✕</button><div class="grow"><b>Лусия</b>
+      <div class="muted" style="font-size:13px">из Валенсии · пиши по-испански, ошибки — не страшно</div></div></div>
+      <div id="log" class="chatlog"><p class="muted center">Загружаю переписку…</p></div>
+      <div class="composer"><input class="answer" id="msg" autocomplete="off" placeholder="Escribe en español…">
+      <button class="btn" id="send" style="width:auto;margin:0;padding:12px 16px">➤</button></div>`);
+    document.getElementById("x").onclick = leaveChat;
+    const log = document.getElementById("log");
+    const bubble = (who, html) => {
+      log.insertAdjacentHTML("beforeend", `<div class="bubble ${who}">${html}</div>`);
+      log.querySelectorAll(".spoiler").forEach(s => s.onclick = () => s.classList.add("open"));
+      log.querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(b.dataset.say));
+      window.scrollTo(0, document.body.scrollHeight);
+    };
+    const luciaHtml = r => `${r.correction ? `<div class="fix">✏️ ${esc(r.correction)}</div>` : ""}
+      <div class="row"><div class="grow es">${esc(r.reply_es)}</div>${sayBtn(r.reply_es)}</div>
+      <div class="spoiler">🇷🇺 ${esc(r.reply_ru)}</div>`;
+    try {
+      const h = await api({ op: "history" });
+      if (h.error) throw new Error(h.error);
+      log.innerHTML = h.history.length ? "" : `<p class="muted center">Напиши Лусии «¡Hola!» 👋</p>`;
+      h.history.slice(-12).forEach(m => bubble(m.role === "user" ? "me" : "her",
+        m.role === "user" ? esc(m.text) : `<div class="row"><div class="grow es">${esc(m.text)}</div>${sayBtn(m.text)}</div>`));
+    } catch (e) {
+      log.innerHTML = `<p class="muted center">Не получилось загрузить чат. Открой приложение через бота.</p>`;
+    }
+    const inp = document.getElementById("msg"), btn = document.getElementById("send");
+    const send = async () => {
+      const text = inp.value.trim();
+      if (!text) return;
+      inp.value = ""; btn.disabled = true;
+      bubble("me", esc(text));
+      bubble("her typing", "…");
+      try {
+        const r = await api({ text });
+        log.querySelector(".typing").remove();
+        if (r.error) throw new Error(r.error);
+        bubble("her", luciaHtml(r));
+        speak(r.reply_es);
+      } catch (e) {
+        const t = log.querySelector(".typing"); if (t) t.remove();
+        bubble("her", `<span class="muted">Лусия сейчас не отвечает 😕 Попробуй ещё раз.</span>`);
+      }
+      btn.disabled = false; inp.focus();
+    };
+    btn.onclick = send;
+    inp.onkeydown = ev => { if (ev.key === "Enter") send(); };
+  }
+  function leaveChat() { if (tg) tg.BackButton.offClick(leaveChat); home(); }
 
   /* ───────── урок ───────── */
   let S = null; // текущая сессия
