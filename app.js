@@ -162,8 +162,10 @@
       <div class="muted" style="font-size:13px">говорите о чём угодно · ошибки — не страшно</div></div>
       <button class="x" id="clear" title="Очистить переписку">🧹</button></div>
       <div id="log" class="chatlog"><p class="muted center">Загружаю переписку…</p></div>
-      <div class="composer"><input class="answer" id="msg" autocomplete="off" placeholder="Escribe en español…">
-      <button class="btn" id="send" style="width:auto;margin:0;padding:12px 16px">➤</button></div>`);
+      <div class="composer"><div id="hint" class="hint" style="display:none"></div>
+      <div class="row"><button class="btn secondary" id="ruBtn" title="Помоги ответить: пиши по-русски" style="width:auto;margin:0;padding:12px 10px">🇷🇺→🇪🇸</button>
+      <input class="answer" id="msg" autocomplete="off" placeholder="Escribe en español…">
+      <button class="btn" id="send" style="width:auto;margin:0;padding:12px 16px">➤</button></div></div>`);
     document.getElementById("x").onclick = leaveChat;
     const log = document.getElementById("log");
     const bubble = (who, html) => {
@@ -212,7 +214,38 @@
       btn.disabled = false; inp.focus();
     };
     btn.onclick = send;
-    inp.onkeydown = ev => { if (ev.key === "Enter") send(); };
+
+    /* Помощник: в режиме 🇷🇺 пишешь по-русски — получаешь фразу на испанском в поле ввода */
+    const ruBtn = document.getElementById("ruBtn"), hint = document.getElementById("hint");
+    let ruMode = false;
+    const setRu = on => {
+      ruMode = on;
+      ruBtn.classList.toggle("on", on);
+      inp.placeholder = on ? "Что хочешь сказать? (по-русски)" : "Escribe en español…";
+      if (on) { hint.style.display = "block"; hint.innerHTML = `<span class="muted">Напиши по-русски и нажми ➤ — переведу на простой испанский</span>`; }
+      inp.focus();
+    };
+    const composeRu = async () => {
+      const ru = inp.value.trim();
+      if (!ru) return;
+      btn.disabled = true;
+      hint.innerHTML = `<span class="muted">Перевожу…</span>`;
+      try {
+        const r = await api({ op: "compose", text: ru });
+        if (r.error) throw new Error(r.error);
+        hint.innerHTML = `<div class="row"><div class="grow"><b>${esc(r.es)}</b><div class="muted" style="font-size:14px">${esc(r.back_ru)}</div>
+          ${r.notes ? `<div style="font-size:14px;margin-top:4px">💡 ${esc(r.notes)}</div>` : ""}</div>${sayBtn(r.es)}</div>
+          <div class="muted" style="font-size:13px;margin-top:4px">Фраза в поле ввода — поправь или отправь ➤. Лучше перепечатай сам.</div>`;
+        hint.querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(b.dataset.say));
+        inp.value = r.es;
+        setRu(false); hint.style.display = "block";
+      } catch (e) { hint.innerHTML = `<span class="muted">Не получилось перевести 😕 Попробуй ещё раз.</span>`; }
+      btn.disabled = false;
+    };
+    ruBtn.onclick = () => setRu(!ruMode);
+    const go = () => { if (ruMode) return composeRu(); hint.style.display = "none"; send(); };
+    btn.onclick = go;
+    inp.onkeydown = ev => { if (ev.key === "Enter") go(); };
   }
   function leaveChat() { if (tg) tg.BackButton.offClick(leaveChat); home(); }
 
