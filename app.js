@@ -159,7 +159,8 @@
   async function chat() {
     if (tg) { tg.BackButton.show(); tg.BackButton.onClick(leaveChat); }
     render(`<div class="top"><button class="x" id="x">✕</button><div class="grow"><b>Лусия</b>
-      <div class="muted" style="font-size:13px">из Валенсии · пиши по-испански, ошибки — не страшно</div></div></div>
+      <div class="muted" style="font-size:13px">говорите о чём угодно · ошибки — не страшно</div></div>
+      <button class="x" id="clear" title="Очистить переписку">🧹</button></div>
       <div id="log" class="chatlog"><p class="muted center">Загружаю переписку…</p></div>
       <div class="composer"><input class="answer" id="msg" autocomplete="off" placeholder="Escribe en español…">
       <button class="btn" id="send" style="width:auto;margin:0;padding:12px 16px">➤</button></div>`);
@@ -170,6 +171,13 @@
       log.querySelectorAll(".spoiler").forEach(s => s.onclick = () => s.classList.add("open"));
       log.querySelectorAll("[data-say]").forEach(b => b.onclick = () => speak(b.dataset.say));
       window.scrollTo(0, document.body.scrollHeight);
+    };
+    document.getElementById("clear").onclick = async () => {
+      const ok = await new Promise(res => tg && tg.showConfirm
+        ? tg.showConfirm("Очистить переписку с Лусией?", res) : res(confirm("Очистить переписку с Лусией?")));
+      if (!ok) return;
+      try { await api({ op: "clear" }); log.innerHTML = `<p class="muted center">Переписка очищена. Напиши Лусии «¡Hola!» 👋</p>`; }
+      catch (e) { haptic("error"); }
     };
     const luciaHtml = r => `${r.correction ? `<div class="fix">✏️ ${esc(r.correction)}</div>` : ""}
       <div class="row"><div class="grow es">${esc(r.reply_es)}</div>${sayBtn(r.reply_es)}</div>
