@@ -81,3 +81,6 @@ input.answer:focus { border-color: var(--btn); }
 .hint { background: var(--bg2); border-radius: 12px; padding: 10px 12px; }
 #ruBtn.on { background: var(--btn); color: var(--btn-text); }
 .chatlog { padding-bottom: 170px; }
+#ruBtn { white-space: nowrap; flex: none; font-size: 15px; }
+.composer .row .answer { flex: 1; min-width: 0; }
+#send { flex: none; }
