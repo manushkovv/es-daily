@@ -75,3 +75,4 @@ input.answer:focus { border-color: var(--btn); }
 .bubble .spoiler.open { background: none; color: var(--hint); }
 .composer { position: fixed; left: 0; right: 0; bottom: 0; display: flex; gap: 8px; padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
   background: var(--bg); border-top: 1px solid var(--bg2); max-width: 560px; margin: 0 auto; }
+.bubble .help { font-size: 15px; margin-bottom: 6px; }

@@ -180,8 +180,9 @@
       catch (e) { haptic("error"); }
     };
     const luciaHtml = r => `${r.correction ? `<div class="fix">✏️ ${esc(r.correction)}</div>` : ""}
+      ${r.help_ru ? `<div class="help">💬 ${esc(r.help_ru)}</div>` : ""}
       <div class="row"><div class="grow es">${esc(r.reply_es)}</div>${sayBtn(r.reply_es)}</div>
-      <div class="spoiler">🇷🇺 ${esc(r.reply_ru)}</div>`;
+      <div class="spoiler${r.help_ru ? " open" : ""}">🇷🇺 ${esc(r.reply_ru)}</div>`;
     try {
       const h = await api({ op: "history" });
       if (h.error) throw new Error(h.error);
